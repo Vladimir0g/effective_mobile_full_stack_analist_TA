@@ -1,0 +1,195 @@
+Задание 3.1:
+ Требуется описать REST api интерфейс на стороне бэк сервиса, который должен вызываться фронтендом при нажатии на кнопку “Register”. Описание должно включать:
+•	http метод + URL
+•	входные параметры (наименование, тип, обязательность, ограничения)
+•	выходные параметры при успешном ответе (наименование, тип, обязательность, ограничения)
+•	выходные параметры при ответе с ошибкой  (наименование, тип, обязательность, ограничения)
+•	описание ошибок - коды ответов (главное верно указать клиентские или серверные) + текст сообщения
+•	пример запроса
+•	пример ответа (для успешного сценария и сценария с ошибкой).
+Требований к формату нет (может быть в виде таблицы или просто текстом).
+Допускается описание в формате openAPI спецификации. Полученный yaml  приложить в виде текста к решению или в виде отдельного файла (обязательно не забыть открыть доступ).
+
+Описание REST API интерфейса для метода «Register»						
+Метод: POST												
+URL: /api/users/register										
+Входные параметры:											
+Наименование		Тип	Необходимость 
+заполнения	Ограничения
+firstName	string	Да	Длина 3–50 символов, только буквенные символы и пробелы
+lastName	string	Да	Длина 3–50 символов, только буквенные символы и пробелы
+userName	string	Да	Длина 3–50 символов, допустимы числовые симловы
+password	string	Да	Длина 6–20 символов, должен содержать минимум 1 цифру, 1 заглавную и 1 строчную букву	
+captchaToken	boolean	Да	Токен, полученный от reCAPTCHA (длина ~200 символов)
+													
+
+
+
+
+
+Описание REST API интерфейса для метода «Register»						
+Метод: POST												
+URL: /api/users/register										
+Выходные параметры при успешном ответе:								
+Наименование		Тип	Необходимость 
+заполнения	Ограничения
+UserID	string	Да	UUID-идентификатор пользователя
+firstName	string	Да	Имя пользователя, как в изначальном запросе
+lastName	string	Да	Фамилия пользователя, как в изначальном запросе
+userName	string	Да	Никнейм пользователя, как в изначальном запросе
+captchaToken	boolean	Да	Если success = true — пропускает дальше
+status	string	Да	Статус аккаунта (ACTIVE)
+
+Описание REST API интерфейса для метода «Register»						
+Метод: POST												
+URL: /api/users/register										
+Выходные параметры с ошибкой:									
+Наименование		Тип	Необходимость 
+заполнения	Описание
+errorCode	integer	Да	Код ошибки
+errorMessage	string	Да	Текстовое описание ошибки
+field	string	Да	Имя поля, вызвавшего ошибку
+							
+Ошибки: Клиент/Сервер										
+Клиентские ошибки											
+Номер	Тип	Описание 
+400	Bad Request	Некорректный формат запроса (например, отсутствуют обязательные поля, неверный формат логин, пароль)
+409	Conflict	Пользователь уже зарегистрирован в системе
+422	Unprocessable Entity	Пароли не совпадают, или не выполнены требования к паролю
+Серверные ошибки											
+Номер	Тип	Описание 
+500	Internal Server Error	Внутренняя ошибка сервера (как правило, ошибки могут быть локальные, сбой передачи API или сбой в БД)
+503	Service Unavailable	Сервис временно недоступен (перегрузка сервера)
+													
+
+
+
+
+openapi: 3.0.3
+info:
+  title: User Registration API
+  version: 1.0.0
+paths:
+  /api/users/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  pattern: "^[A-Za-zА-Яа-яЁё\\s]+$"
+                lastName:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  pattern: "^[A-Za-zА-Яа-яЁё\\s]+$"
+                userName:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  pattern: "^[A-Za-z0-9]+$"
+                password:
+                  type: string
+                  minLength: 6
+                  maxLength: 20
+                  pattern: "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).+$"
+                captchaToken:
+                  type: string
+                  minLength: 20
+                  maxLength: 200
+      responses:
+        '201':
+          description: User successfully registered – Пользователь успешно зарегистрирован  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  UserID:
+                    type: string
+                  firstName:
+                    type: string
+                  lastName:
+                    type: string
+                  userName:
+                    type: string
+                  captchaToken:
+                    type: boolean
+                  status:
+                    type: string
+        '400':
+          description: Bad Request - Некорректный формат запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                  errorMessage:
+                    type: string
+                  field:
+                    type: string
+        '409':
+          description: Conflict - Пользователь уже зарегистрирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                  errorMessage:
+                    type: string
+                  field:
+                    type: string
+        '422':
+          description: Unprocessable Entity – Пароли не совпадают
+JSON формат примера запроса POST /api/users/register				
+"{
+  ""firstName"": ""Иван"",
+  ""lastName"": ""Иванов"",
+""userName"": ""Ivan""
+  ""password"": "" Ivan2025"",
+  ""captchaToken"": ""yaNErobot""
+}"		
+JSON формат пример ответа успешный сценарий POST /api/users/register			
+"{
+  ""userId"": ""153e4517-e89b-65v3-a456-426614174213"",
+  ""firstName"": ""Иван"",
+  ""lastName"": ""Иванов"",
+  ""userName"": ""Ivan""
+  ""status"": ""ACTIVE""
+}"													
+Для проверки каптчи отправляется запрос: "curl -X POST \
+  'https://www.google.com/recaptcha/api/siteverify' \
+  -d 'secret=секретный ключ(полученный при регистрации каптчи)&response= yaNErobot'"	https://www.google.com/recaptcha/admin/create  						На этом сайте создаем Captcha				
+JSON результат:											
+"{
+  ""success"": true,
+  ""challenge_ts"": ""2025-12-14T11:00:00Z"",
+  ""hostname"": ""example.com""
+}"										
+JSON формат пример ответа сценарий с ошибкой POST /api/users/register			
+"{
+  ""errorCode"": 400,
+  ""errorMessage"": ""Пароль не соответствует заданным параметрам"",
+  ""field"": ""WrongPassword""
+}"													
+"{
+  ""errorCode"": 409,
+  ""errorMessage"": ""Пользователь уже зарегистрирован в системе"",
+  ""field"": ""userExist""
+}"													
+"{
+  ""errorCode"": 422,
+  ""errorMessage"": "" Пароли не совпадают"",
+  ""field"": "" WrongPassword ""
+}"	
